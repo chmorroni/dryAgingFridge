@@ -1,6 +1,7 @@
 
 from datetime import datetime
 import gpiozero
+import time
 
 class WaterAtomizer(gpiozero.DigitalOutputDevice):
     def __init__(self, pin):
@@ -19,6 +20,6 @@ class WaterAtomizer(gpiozero.DigitalOutputDevice):
 if __name__ == "__main__":
     atomizer = WaterAtomizer(0)
     while True:
-        if atomizer.time_since_last_run() > 5
+        if atomizer.time_since_last_run() > 5:
             atomizer.run()
         time.sleep(1)
