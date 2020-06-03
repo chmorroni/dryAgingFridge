@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Dry Aging Fridge Stats</title>
+  <link rel="stylesheet" type="text/css" href="static/style.css">
+  <script src="static/jquery-3.4.1.min.js"></script>
+  <script src="static/plotly-latest.min.js" charset="utf-8"></script>
+  <script src="static/socket.io.slim.js"></script>
+  <script type="text/javascript">
+    var layout = {"title": {"text": "Temperature and Humidity"}, "xaxis": {"title": {"text": "Time"}}, "yaxis": {"range": [0, 100]}, "margin": {"t": 50, "r": 50, "b": 50, "l": 50}, "legend": {"x": 1, "y": 0.5}};
+    var config = {"responsive": true};
+
+    var socket = io();
+    socket.on("connect", function() {
+      get_data();
+    });
+
+    function get_data() {
+      // disable any running timer
+      set_timer(false, 0);
+
+      socket.emit("data-request");
+    }
+
+    // handle data response
+    socket.on("data-response", function(data_json){
+      var data = JSON.parse(data_json);
+      console.log(data)
+      console.log(layout)
+      console.log(config)
+      Plotly.newPlot("plot", data, layout, config);
+      set_timer(true, 1000);
+    });
+
+    // setup timer for periodic polling
+    function set_timer(enabled, delay_ms)
+    {
+      if(enabled == true) {
+        set_timer.timer = setTimeout(get_data, delay_ms);
+      }
+      else if(enabled == false) {
+        clearTimeout(set_timer.timer);
+      }
+    }
+  </script>
+</head>
+
+<body>
+
+  <div id="header">
+    <div id="left_third"></div>
+    <div id="center_third"><h1 id="title">Dry Aging Fridge Stats</h1></div>
+    <div id="right_third"></div>
+  </div>
+
+  <div id="plot_container"><div id="plot"></div></div>
+
+</body>
+
+</html>

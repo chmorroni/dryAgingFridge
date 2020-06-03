@@ -15,8 +15,16 @@ class CircBuf:
     def clear(self):
         self.buf.clear()
 
-    def get_list(self):
-        """ Get the buffer in the form of a list """
+    def get_data(self):
+        data_lists = list(map(list, zip(*self.buf)))
 
-        return list(self.buf)
+        data = [{}, {}]
+        data[0]["x"] = [date.strftime("%Y-%m-%d %X") for date in data_lists[0]]
+        data[1]["x"] = [date.strftime("%Y-%m-%d %X") for date in data_lists[0]]
+        data[0]["y"] = data_lists[1]
+        data[1]["y"] = data_lists[2]
+        data[0]["name"] = "Temperature (F)"
+        data[1]["name"] = "Humidity (%)"
+        
+        return data
         

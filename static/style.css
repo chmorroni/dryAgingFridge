@@ -1,0 +1,60 @@
+
+@import url(//fonts.googleapis.com/css?family=Open+Sans);
+
+html {
+    font-family: "Open Sans", verdana, arial, sans-serif;
+}
+
+body {
+    margin: 0;
+}
+
+#header {
+    display: table;
+    border-color: rgb(235, 235, 235)!important;
+    border-bottom: 2px solid;
+    margin: 0;
+    height: 70px;
+    width: 100%;
+}
+
+#left_third {
+    display: table-cell;
+    margin: 0;
+    height: 100%;
+    width: 33.33%;
+}
+
+#center_third {
+    display: table-cell;
+    margin: 0;
+    height: 100%;
+    width: 33.33%;
+    vertical-align: middle;
+}
+
+#right_third {
+    display: table-cell;
+    margin: 0;
+    height: 100%;
+    width: 33.33%;
+}
+
+#title {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+#plot_container {
+    box-sizing: border-box;
+    margin: 0;
+    height: 100%;
+}
+
+#plot {
+    margin: auto;
+    padding: 5%;
+    height: 600px;
+    width: 900px;
+}
