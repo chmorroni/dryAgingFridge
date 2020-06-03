@@ -7,10 +7,10 @@ class DoorSwitch(gpiozero.Button):
         gpiozero.Button.__init__(self, pin, pull_up=True)
 
     def isOpen(self):
-        return gpiozero.Button.is_pressed(self)
+        return not self.is_pressed
 
 if __name__ == "__main__":
-    door = DoorSwitch(0)
+    door = DoorSwitch(1)
     while True:
         if door.isOpen():
             print("State: open")

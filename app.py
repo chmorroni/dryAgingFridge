@@ -40,8 +40,8 @@ out_path = "data"
 csv_filename = "data.csv"
 
 sensors = [AtmosphericSensor(1, 0), AtmosphericSensor(1, 1), AtmosphericSensor(1, 2)]
-compressor = Compressor(1) # TODO actual pin
-door = DoorSwitch(2) # TODO actual pin
+compressor = Compressor(26)
+door = DoorSwitch(1)
 atomizer = WaterAtomizer(3) # TODO actual pin
 
 

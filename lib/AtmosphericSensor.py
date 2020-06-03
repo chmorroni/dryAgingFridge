@@ -1,5 +1,5 @@
 
-from lib.BME280 import BME280
+from BME280 import BME280
 
 import spidev
 import time

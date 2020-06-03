@@ -8,7 +8,7 @@ class Compressor(gpiozero.DigitalOutputDevice):
         self.off()
 
 if __name__ == "__main__":
-    compressor = Compressor(0)
+    compressor = Compressor(2)
     while True:
         compressor.on()
         time.sleep(5)
