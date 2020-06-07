@@ -40,9 +40,10 @@ out_path = "data"
 csv_filename = "data.csv"
 
 sensors = [AtmosphericSensor(1, 0), AtmosphericSensor(1, 1), AtmosphericSensor(1, 2)]
-compressor = Compressor(26)
+compressor_pins = [2, 3, 4]
+compressor = Compressor(pins)
 door = DoorSwitch(1)
-atomizer = WaterAtomizer(3) # TODO actual pin
+# atomizer = WaterAtomizer(3) # TODO actual pin
 
 
 def sample_periodic():
@@ -64,8 +65,8 @@ def sample_periodic():
     elif temp < TEMPERATURE_FLOOR_F:
         compressor.off()
 
-    if (humidity < HUMIDITY_TARGET_PERCENT) and (atomizer.time_since_last_run() > ATOMIZER_RUN_DELAY_S):
-        atomizer.run()
+    # if (humidity < HUMIDITY_TARGET_PERCENT) and (atomizer.time_since_last_run() > ATOMIZER_RUN_DELAY_S):
+        # atomizer.run()
 
     # schedule next sampling
     timer = threading.Timer(1 / SAMPLE_FREQ_HZ, sample_periodic)

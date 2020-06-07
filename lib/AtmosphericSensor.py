@@ -24,9 +24,12 @@ class AtmosphericSensor:
         return self.device.read_humidity()
 
 if __name__ == "__main__":
-    sensor = AtmosphericSensor(1, 0)
+    sensors = []
+    sensors.append(AtmosphericSensor(1, 0))
+    sensors.append(AtmosphericSensor(1, 1))
+    sensors.append(AtmosphericSensor(1, 2))
     while True:
-        print("Temp: {:.3f} F, Humidity: {:.3f}%".format(sensor.getTemp(), sensor.getHumidity()))
+        for i in range(0, 3):
+            print("Sensor {:d} Temp: {:.3f} F, Humidity: {:.3f}%".format(i, sensors[i].getTemp(), sensors[i].getHumidity()))
         time.sleep(1)
-    sensor.close()
 

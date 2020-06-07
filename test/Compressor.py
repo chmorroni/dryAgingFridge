@@ -1,6 +1,6 @@
 
 class Compressor:
-    def __init__(self, pin):
+    def __init__(self, pins):
         self.off()
     
     def off(self):
