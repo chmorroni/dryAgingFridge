@@ -41,7 +41,7 @@ csv_filename = "data.csv"
 
 sensors = [AtmosphericSensor(1, 0), AtmosphericSensor(1, 1), AtmosphericSensor(1, 2)]
 compressor_pins = [2, 3, 4]
-compressor = Compressor(pins)
+compressor = Compressor(compressor_pins)
 door = DoorSwitch(1)
 # atomizer = WaterAtomizer(3) # TODO actual pin
 
@@ -50,14 +50,18 @@ def sample_periodic():
     # sample sensors
     door.isOpen()
     time = datetime.now()
-    temp = numpy.average([sensors[0].getTemp(), sensors[1].getTemp(), sensors[2].getTemp()])
-    humidity = numpy.average([sensors[0].getHumidity(), sensors[1].getHumidity(), sensors[2].getHumidity()])
+    temps = [sensors[0].getTemp(), sensors[1].getTemp(), sensors[2].getTemp()]
+    temp = numpy.average(temps)
+    humidities = [sensors[0].getHumidity(), sensors[1].getHumidity(), sensors[2].getHumidity()]
+    humidity = numpy.average(humidities)
     
     # save datapoint
-    datapoint = (time, temp, humidity)
+    datapoint = (time, temps[0], temps[1], temps[2], humidities[0], humidities[1], humidities[2])
     buffer.push(datapoint)
     with open(os.path.join(out_path, csv_filename), 'a') as csv_file:
-        csv_file.write("{:s}, {:.2f}, {:.2f}\n".format(time.strftime("%Y-%m-%d %X"), temp, humidity))
+        csv_file.write("{:s}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}\n".format(
+            time.strftime("%Y-%m-%d %X"), temps[0], temps[1], temps[2], humidities[0], humidities[1], humidities[2])
+        )
 
     # if needed, activate compressor/atomizer
     if temp > TEMPERATURE_CEIL_F:
@@ -97,7 +101,7 @@ if __name__ == "__main__":
         os.makedirs(out_path)
 
     with open(os.path.join(out_path, csv_filename), 'w') as csv_file:
-        csv_file.write("Time, Temperature (F), Humidity (%)\n")
+        csv_file.write("Time, Sensor 1 Temperature (F), Sensor 2 Temperature (F), Sensor 3 Temperature (F), Sensor 1 Humidity (%), Sensor 2 Humidity (%), Sensor 3 Humidity (%)\n")
 
     # start periodic sampling
     sample_periodic()
