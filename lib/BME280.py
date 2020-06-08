@@ -145,7 +145,7 @@ class BME280(object):
         self.dig_T3 = int.from_bytes(bytes(buf), byteorder="little", signed=True)
 
         buf = self._device.xfer([BME280_REGISTER_DIG_P1, 0, 0])[1:]
-        self.dig_P1 = int.from_bytes(bytes(buf), byteorder="little", signed=True)
+        self.dig_P1 = int.from_bytes(bytes(buf), byteorder="little", signed=False)
         buf = self._device.xfer([BME280_REGISTER_DIG_P2, 0, 0])[1:]
         self.dig_P2 = int.from_bytes(bytes(buf), byteorder="little", signed=True)
         buf = self._device.xfer([BME280_REGISTER_DIG_P3, 0, 0])[1:]
@@ -163,24 +163,21 @@ class BME280(object):
         buf = self._device.xfer([BME280_REGISTER_DIG_P9, 0, 0])[1:]
         self.dig_P9 = int.from_bytes(bytes(buf), byteorder="little", signed=True)
 
-        buf = self._device.xfer([BME280_REGISTER_DIG_H1, 0, 0])[1:]
+        buf = self._device.xfer([BME280_REGISTER_DIG_H1, 0])[1:]
         self.dig_H1 = int.from_bytes(bytes(buf), byteorder="little", signed=False)
-        buf = self._device.xfer([BME280_REGISTER_DIG_H2, 0, 0, 0])[1:]
+        buf = self._device.xfer([BME280_REGISTER_DIG_H2, 0, 0])[1:]
         self.dig_H2 = int.from_bytes(bytes(buf), byteorder="little", signed=True)
-        buf = self._device.xfer([BME280_REGISTER_DIG_H3, 0, 0])[1:]
-        self.dig_H3 = int.from_bytes(bytes(buf), byteorder="little", signed=False)
-        buf = self._device.xfer([BME280_REGISTER_DIG_H7, 0, 0])[1:]
-        self.dig_H6 = int.from_bytes(bytes(buf), byteorder="little", signed=True)
+        buf = self._device.xfer([BME280_REGISTER_DIG_H3, 0])[1:]
+        self.dig_H3 = int.from_bytes(bytes(buf), byteorder="little", signed=True)
 
         buf = self._device.xfer([BME280_REGISTER_DIG_H4, 0, 0])[1:]
-        h4 = int.from_bytes(bytes(buf[0]), byteorder="little", signed=True)
-        h4 = (h4 << 4)
-        self.dig_H4 = h4 | (buf[1] & 0x0F)
+        self.dig_H4 = (buf[0] << 4) | (buf[1] & 0x0F)
 
         buf = self._device.xfer([BME280_REGISTER_DIG_H5, 0, 0])[1:]
-        h5 = int.from_bytes(bytes(buf[0]), byteorder="little", signed=True)
-        h5 = (h5 << 4)
-        self.dig_H5 = h5 | (buf[1] >> 4 & 0x0F)
+        self.dig_H5 = ((buf[0] >> 4) & 0x0F) | (buf[1] << 4)
+
+        buf = self._device.xfer([BME280_REGISTER_DIG_H7, 0])[1:]
+        self.dig_H6 = int.from_bytes(bytes(buf), byteorder="little", signed=True)
 
     def read_raw_temp(self):
         """Waits for reading to become available on device."""
@@ -237,7 +234,7 @@ class BME280(object):
 
     def read_humidity(self):
         adc = float(self.read_raw_humidity())
-        # print 'Raw humidity = {0:d}'.format (adc)
+        # print('Raw humidity = {0:.3f}'.format (adc))
         h = float(self.t_fine) - 76800.0
         h = (adc - (float(self.dig_H4) * 64.0 + float(self.dig_H5) / 16384.0 * h)) * (
         float(self.dig_H2) / 65536.0 * (1.0 + float(self.dig_H6) / 67108864.0 * h * (
