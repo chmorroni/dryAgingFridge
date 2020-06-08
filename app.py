@@ -95,7 +95,7 @@ def sample_periodic():
 
 ## initialize webapp
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "qwerty"
+app.config["SECRET_KEY"] = Accounts.WEB_KEY
 socketio = SocketIO(app)
 
 @app.route("/", methods = ["POST", "GET"])
