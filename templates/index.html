@@ -28,9 +28,6 @@
     // handle data response
     socket.on("data-response", function(data_json){
       var data = JSON.parse(data_json);
-      console.log(data)
-      console.log(layout)
-      console.log(config)
       Plotly.newPlot("plot", data, layout, config);
       set_timer(true, sample_time_ms);
     });

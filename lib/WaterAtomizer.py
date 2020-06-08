@@ -10,7 +10,7 @@ class WaterAtomizer(gpiozero.DigitalOutputDevice):
         self.last_run = datetime(2000, 1, 1, 0, 0, 0)
 
     def run(self):
-        gpiozero.DigitalOutputDevice.blink(self, on_time=0.01, off_time=1, n=2, background=True)
+        self.blink(on_time=0.01, off_time=1, n=2, background=True)
         self.last_run = datetime.now()
 
     def time_since_last_run(self):

@@ -11,10 +11,12 @@ class Compressor():
 
     def on(self):
         for pin in self.pins:
+            self.is_on = True
             pin.on()
 
     def off(self):
         for pin in self.pins:
+            self.is_on = False
             pin.off()
 
 if __name__ == "__main__":

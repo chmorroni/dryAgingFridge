@@ -63,14 +63,6 @@ def sample_periodic():
     temp = numpy.average(temps)
     humidities = [sensors[0].getHumidity(), sensors[1].getHumidity(), sensors[2].getHumidity()]
     humidity = numpy.average(humidities)
-    
-    # save datapoint
-    datapoint = (time, temps[0], temps[1], temps[2], humidities[0], humidities[1], humidities[2])
-    buffer.push(datapoint)
-    with open(os.path.join(out_path, csv_filename), 'a') as csv_file:
-        csv_file.write("{:s}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}\n".format(
-            time.strftime("%Y-%m-%d %X"), temps[0], temps[1], temps[2], humidities[0], humidities[1], humidities[2])
-        )
 
     # if needed, activate compressor/atomizer
     if temp > TEMPERATURE_CEIL_F:
@@ -80,6 +72,14 @@ def sample_periodic():
 
     # if (humidity < HUMIDITY_TARGET_PERCENT) and (atomizer.time_since_last_run() > ATOMIZER_RUN_DELAY_S):
         # atomizer.run()
+    
+    # save datapoint
+    datapoint = (time, temps[0], temps[1], temps[2], humidities[0], humidities[1], humidities[2])
+    buffer.push(datapoint)
+    with open(os.path.join(out_path, csv_filename), 'a') as csv_file:
+        csv_file.write("{:s}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:s}\n".format(
+            time.strftime("%Y-%m-%d %X"), temps[0], temps[1], temps[2], humidities[0], humidities[1], humidities[2], str(compressor.is_on))
+        )
 
     # check warning bounds
     if (temp > TEMPERATURE_WARNING_UPPER_F) or (temp < TEMPERATURE_WARNING_LOWER_F):
@@ -106,7 +106,49 @@ def line():
 ## event handlers
 @socketio.on("data-request")
 def send_data():
-    data_json = json.dumps(buffer.get_data())
+    raw_data = buffer.get_data()
+    
+    data = [{}, {}, {}, {}, {}, {}, {}, {}]
+
+    for line in data:
+        line["x"] = [date.strftime("%Y-%m-%d %X") for date in raw_data[0]]
+
+    data[0]["y"] = raw_data[1]
+    data[1]["y"] = raw_data[2]
+    data[2]["y"] = raw_data[3]
+    data[3]["y"] = raw_data[4]
+    data[4]["y"] = raw_data[5]
+    data[5]["y"] = raw_data[6]
+    data[6]["y"] = list(numpy.average(raw_data[1:4], axis=0))
+    data[7]["y"] = list(numpy.average(raw_data[4:7], axis=0))
+
+    data[0]["name"] = "Sensor 1 Temperature (F)"
+    data[1]["name"] = "Sensor 2 Temperature (F)"
+    data[2]["name"] = "Sensor 3 Temperature (F)"
+    data[3]["name"] = "Sensor 1 Humidity (%)"
+    data[4]["name"] = "Sensor 2 Humidity (%)"
+    data[5]["name"] = "Sensor 3 Humidity (%)"
+    data[6]["name"] = "Average Humidity (%)"
+    data[7]["name"] = "Average Temperature (F)"
+
+    # styling
+    for line in data:
+        line["mode"] = "lines"
+        line["line"] = {}
+
+    for line in data[0:6]:
+        line["showlegend"] = False
+
+    data[0]["line"]["color"] = "#FBD6D0"
+    data[1]["line"]["color"] = "#FBD6D0"
+    data[2]["line"]["color"] = "#FBD6D0"
+    data[3]["line"]["color"] = "#CED1FD"
+    data[4]["line"]["color"] = "#CED1FD"
+    data[5]["line"]["color"] = "#CED1FD"
+    data[6]["line"]["color"] = "#EF553B"
+    data[7]["line"]["color"] = "#636EFA"
+
+    data_json = json.dumps(data)
     emit("data-response", data_json)
 
 
@@ -116,7 +158,7 @@ if __name__ == "__main__":
         os.makedirs(out_path)
 
     with open(os.path.join(out_path, csv_filename), 'w') as csv_file:
-        csv_file.write("Time, Sensor 1 Temperature (F), Sensor 2 Temperature (F), Sensor 3 Temperature (F), Sensor 1 Humidity (%), Sensor 2 Humidity (%), Sensor 3 Humidity (%)\n")
+        csv_file.write("Time, Sensor 1 Temperature (F), Sensor 2 Temperature (F), Sensor 3 Temperature (F), Sensor 1 Humidity (%), Sensor 2 Humidity (%), Sensor 3 Humidity (%), Compressor On\n")
 
     # start periodic sampling
     sample_periodic()

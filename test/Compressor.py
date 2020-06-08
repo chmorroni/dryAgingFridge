@@ -4,7 +4,7 @@ class Compressor:
         self.off()
     
     def off(self):
-        self.on_state = False
+        self.is_on = False
     
     def on(self):
-        self.on_state = True
+        self.is_on = True
