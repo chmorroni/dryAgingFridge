@@ -9,6 +9,7 @@
   <script src="static/plotly-latest.min.js" charset="utf-8"></script>
   <script src="static/socket.io.slim.js"></script>
   <script type="text/javascript">
+    var sample_time_ms = 10000;
     var layout = {"title": {"text": "Temperature and Humidity"}, "xaxis": {"title": {"text": "Time"}}, "yaxis": {"range": [0, 100]}, "margin": {"t": 50, "r": 50, "b": 50, "l": 50}, "legend": {"x": 1, "y": 0.5}};
     var config = {"responsive": true};
 
@@ -31,7 +32,7 @@
       console.log(layout)
       console.log(config)
       Plotly.newPlot("plot", data, layout, config);
-      set_timer(true, 1000);
+      set_timer(true, sample_time_ms);
     });
 
     // setup timer for periodic polling
