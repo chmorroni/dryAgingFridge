@@ -11,7 +11,8 @@ class Email:
 
     def send_mail(self, recipient, subject, content):
         # abort if we sent an email too recently
-        if (datetime.now() - self.last_run) < self.min_send_period_s:
+        since_last_run = datetime.now() - self.last_run
+        if since_last_run.seconds < self.min_send_period_s:
             return
         
         self.last_run = datetime.now()
