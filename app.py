@@ -6,6 +6,7 @@ from flask_socketio import SocketIO, emit
 import json
 import numpy
 import os
+from scipy.signal import butter, filtfilt
 import sys
 import threading
 import time
@@ -120,7 +121,11 @@ def send_data():
     data[4]["y"] = raw_data[5]
     data[5]["y"] = raw_data[6]
     data[6]["y"] = list(numpy.average(raw_data[1:4], axis=0))
-    data[7]["y"] = list(numpy.average(raw_data[4:7], axis=0))
+
+    # LPF humidity
+    humidity = numpy.average(raw_data[4:7], axis=0)
+    b, a = butter(4, 1/512, btype='low', analog=False)
+    data[7]["y"] = list(filtfilt(b, a, humidity))
 
     data[0]["name"] = "Sensor 1 Temperature (F)"
     data[1]["name"] = "Sensor 2 Temperature (F)"
