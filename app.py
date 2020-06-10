@@ -87,6 +87,8 @@ def sample_periodic():
         email.send_mail(Accounts.TO_EMAIL, "Refrigerator Temperature Out of Bounds", "Current temperature {:.3f} F".format(temp))
     if (humidity > HUMIDITY_WARNING_UPPER_PERCENT) or (humidity < HUMIDITY_WARNING_LOWER_PERCENT):
         email.send_mail(Accounts.TO_EMAIL, "Refrigerator Humidity Out of Bounds", "Current humidity {:.2f}%".format(humidity))
+    if door.isOpen() == True:
+        email.send_mail(Accounts.TO_EMAIL, "Refrigerator Door Open", "Refrigerator door is currently open")
 
     # schedule next sampling
     timer = threading.Timer(1 / SAMPLE_FREQ_HZ, sample_periodic)
