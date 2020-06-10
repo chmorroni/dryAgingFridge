@@ -240,9 +240,7 @@ class BME280(object):
         float(self.dig_H2) / 65536.0 * (1.0 + float(self.dig_H6) / 67108864.0 * h * (
         1.0 + float(self.dig_H3) / 67108864.0 * h)))
         h = h * (1.0 - float(self.dig_H1) * h / 524288.0)
-        if h > 100:
-            h = 100
-        elif h < 0:
+        if h < 0:
             h = 0
         return h
 

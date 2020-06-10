@@ -35,7 +35,7 @@ TEMPERATURE_WARNING_LOWER_F = 30
 
 HUMIDITY_TARGET_PERCENT = 80
 HUMIDITY_WARNING_UPPER_PERCENT = 100
-HUMIDITY_WARNING_LOWER_PERCENT = 50
+HUMIDITY_WARNING_LOWER_PERCENT = 20
 ATOMIZER_RUN_DELAY_S = 5
 
 SAMPLE_FREQ_HZ = 1
@@ -46,7 +46,7 @@ MIN_EMAIL_PERIOD_S = 15 * 60 # 15 minutes
 
 buffer = CircBuf(SAMPLE_BUFFER_LEN)
 out_path = "data"
-csv_filename = "data.csv"
+csv_filename = "data_{:s}.csv".format(datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
 sensors = [AtmosphericSensor(1, 0), AtmosphericSensor(1, 1), AtmosphericSensor(1, 2)]
 compressor_pins = [2, 3, 4]
@@ -127,14 +127,14 @@ def send_data():
     b, a = butter(4, 1/512, btype='low', analog=False)
     data[7]["y"] = list(filtfilt(b, a, humidity))
 
-    data[0]["name"] = "Sensor 1 Temperature (F)"
-    data[1]["name"] = "Sensor 2 Temperature (F)"
-    data[2]["name"] = "Sensor 3 Temperature (F)"
-    data[3]["name"] = "Sensor 1 Humidity (%)"
-    data[4]["name"] = "Sensor 2 Humidity (%)"
-    data[5]["name"] = "Sensor 3 Humidity (%)"
-    data[6]["name"] = "Average Humidity (%)"
-    data[7]["name"] = "Average Temperature (F)"
+    data[0]["name"] = "Middle Sensor Temperature (F)"
+    data[1]["name"] = "Upper Sensor Temperature (F)"
+    data[2]["name"] = "Lower Sensor Temperature (F)"
+    data[3]["name"] = "Middle Sensor Humidity (%)"
+    data[4]["name"] = "Upper Sensor Humidity (%)"
+    data[5]["name"] = "Lower Sensor Humidity (%)"
+    data[6]["name"] = "Average Temperature (F)"
+    data[7]["name"] = "Filtered Average Humidity (%)"
 
     # styling
     for line in data:
