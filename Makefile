@@ -10,10 +10,11 @@
 .PHONY: install
 install:
 	sudo mkdir -p /usr/local/bin/dryAgingFridge
-	sudo cp * /usr/local/bin/dryAgingFridge/
+	sudo cp -r * /usr/local/bin/dryAgingFridge/
+	sudo chmod +x /usr/local/bin/dryAgingFridge/app.py
 	sudo cp dryAgingFridge.service /etc/systemd/system
 	sudo systemctl daemon-reload
-	sudo systemctl enable module3
+	sudo systemctl enable dryAgingFridge
 
 .PHONY: uninstall
 uninstall:

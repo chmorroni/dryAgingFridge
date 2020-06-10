@@ -45,7 +45,7 @@ MIN_EMAIL_PERIOD_S = 15 * 60 # 15 minutes
 
 
 buffer = CircBuf(SAMPLE_BUFFER_LEN)
-out_path = "data"
+out_path = "/var/log/dryAgingFridge"
 csv_filename = "data_{:s}.csv".format(datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
 sensors = [AtmosphericSensor(1, 0), AtmosphericSensor(1, 1), AtmosphericSensor(1, 2)]
