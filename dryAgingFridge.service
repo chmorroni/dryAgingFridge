@@ -6,7 +6,9 @@ After=network.target
 [Service]
 WorkingDirectory=/usr/local/bin/dryAgingFridge
 ExecStart=/usr/bin/python3 /usr/local/bin/dryAgingFridge/app.py
-Restart=no
+Restart=always
+RestartSec=1
+StartLimitIntervalSec=0
 
 [Install]
 WantedBy=multi-user.target
