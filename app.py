@@ -1,8 +1,8 @@
 
 import csv
 from datetime import datetime
-from flask import Flask, Response, render_template
-# from flask_socketio import SocketIO, emit, send
+from flask import Flask, Response, render_template, g
+from flask_socketio import SocketIO, emit, send
 import json
 import numpy
 import os
@@ -20,12 +20,10 @@ if (len(sys.argv) > 1) and (sys.argv[1] == "-test"):
     from test.AtmosphericSensor import AtmosphericSensor
     from test.Compressor import Compressor
     from test.DoorSwitch import DoorSwitch
-    from test.WaterAtomizer import WaterAtomizer
 else:
     from lib.AtmosphericSensor import AtmosphericSensor
     from lib.Compressor import Compressor
     from lib.DoorSwitch import DoorSwitch
-    from lib.WaterAtomizer import WaterAtomizer
 
 
 TEMPERATURE_CEIL_F = 36
@@ -34,8 +32,6 @@ TEMPERATURE_WARNING_UPPER_F = 40
 TEMPERATURE_WARNING_LOWER_F = 30
 
 HUMIDITY_TARGET_PERCENT = 80
-HUMIDITY_WARNING_UPPER_PERCENT = 100
-HUMIDITY_WARNING_LOWER_PERCENT = 20
 ATOMIZER_RUN_DELAY_S = 5
 
 SAMPLE_FREQ_HZ = 1
@@ -54,9 +50,15 @@ compressor = Compressor(compressor_pins)
 door = DoorSwitch(1)
 # atomizer = WaterAtomizer(3) # TODO actual pin
 email = Email(MIN_EMAIL_PERIOD_S)
+data_json = ""
 
 
 def sample_periodic():
+    # schedule next sampling
+    timer = threading.Timer(1 / SAMPLE_FREQ_HZ, sample_periodic)
+    timer.daemon = True
+    timer.start()
+
     # sample sensors
     door.isOpen()
     time = datetime.now()
@@ -70,9 +72,6 @@ def sample_periodic():
         compressor.on()
     elif temp < TEMPERATURE_FLOOR_F:
         compressor.off()
-
-    # if (humidity < HUMIDITY_TARGET_PERCENT) and (atomizer.time_since_last_run() > ATOMIZER_RUN_DELAY_S):
-        # atomizer.run()
     
     # save datapoint
     datapoint = (time, temps[0], temps[1], temps[2], humidities[0], humidities[1], humidities[2])
@@ -85,75 +84,79 @@ def sample_periodic():
     # check warning bounds
     if (temp > TEMPERATURE_WARNING_UPPER_F) or (temp < TEMPERATURE_WARNING_LOWER_F):
         email.send_mail(Accounts.TO_EMAIL, "Refrigerator Temperature Out of Bounds", "Current temperature {:.3f} F".format(temp))
-    if (humidity > HUMIDITY_WARNING_UPPER_PERCENT) or (humidity < HUMIDITY_WARNING_LOWER_PERCENT):
-        email.send_mail(Accounts.TO_EMAIL, "Refrigerator Humidity Out of Bounds", "Current humidity {:.2f}%".format(humidity))
     if door.isOpen() == True:
         email.send_mail(Accounts.TO_EMAIL, "Refrigerator Door Open", "Refrigerator door is currently open")
-
-    # schedule next sampling
-    timer = threading.Timer(1 / SAMPLE_FREQ_HZ, sample_periodic)
-    timer.daemon = True
-    timer.start()
 
 
 ## initialize webapp
 app = Flask(__name__)
-# app.config["SECRET_KEY"] = Accounts.WEB_KEY
-# socketio = SocketIO(app)
+app.config["SECRET_KEY"] = Accounts.WEB_KEY
+socketio = SocketIO(app)
 
 @app.route("/", methods = ["POST", "GET"])
 def index():
     return render_template("index.html")
 
 
-## event handlers
 @app.route("/data")
 def chart_data():
     def update_data():
-        while True:
-            start_time = time.process_time()
-
-            raw_data = buffer.get_data()
-            data = [{}, {}, {}]
-
-            for line in data:
-                line["x"] = [date.strftime("%Y-%m-%d %X") for date in raw_data[0]]
-
-            data[1]["y"] = list(numpy.average(raw_data[1:4], axis=0))
-
-            # LPF humidity
-            humidity = numpy.average(raw_data[4:7], axis=0)
-            data[0]["y"] = list(humidity)
-
-            if len(humidity) > 15:
-                b, a = butter(4, 1/512, btype='low', analog=False)
-                data[2]["y"] = list(filtfilt(b, a, humidity))
-            else:
-                data[2]["y"] = list(humidity)
-
-            data[0]["name"] = "Average Humidity (%)"
-            data[1]["name"] = "Average Temperature (F)"
-            data[2]["name"] = "Filtered Average Humidity (%)"
-
-            # styling
-            for line in data:
-                line["mode"] = "lines"
-                line["line"] = {}
-
-            data[0]["showlegend"] = False
-
-            data[0]["line"]["color"] = "#CED1FD"
-            data[1]["line"]["color"] = "#EF553B"
-            data[2]["line"]["color"] = "#636EFA"
-
-            data_json = json.dumps(data)
-            yield f"data:{data_json}\n\n"
-
-            stop_time = time.process_time()
-            print("Processed and sent {:d} datapoints in {:.3f} seconds".format(len(raw_data[0]), stop_time - start_time))
-            time.sleep(1)
+        yield f"data:{data_json}\n\n"
+        time.sleep(10)
 
     return Response(update_data(), mimetype="text/event-stream")
+
+
+@socketio.on("data-request")
+def send_last_data():
+    global data_json
+    emit("data-response", data_json)
+
+
+def process_data():
+    while True:
+        start_time = time.process_time()
+
+        raw_data = buffer.get_data()
+        data = [{}, {}, {}]
+
+        for line in data:
+            line["x"] = [date.strftime("%Y-%m-%d %X") for date in raw_data[0]]
+
+        data[1]["y"] = list(numpy.average(raw_data[1:4], axis=0))
+
+        # LPF humidity
+        humidity = numpy.average(raw_data[4:7], axis=0)
+        data[0]["y"] = list(humidity)
+
+        if len(humidity) > 15:
+            b, a = butter(4, 1/512, btype='low', analog=False)
+            data[2]["y"] = list(filtfilt(b, a, humidity))
+        else:
+            data[2]["y"] = list(humidity)
+
+        data[0]["name"] = "Average Humidity (%)"
+        data[1]["name"] = "Average Temperature (F)"
+        data[2]["name"] = "Filtered Average Humidity (%)"
+
+        # styling
+        for line in data:
+            line["mode"] = "lines"
+            line["line"] = {}
+
+        data[0]["showlegend"] = False
+
+        data[0]["line"]["color"] = "#CED1FD"
+        data[1]["line"]["color"] = "#EF553B"
+        data[2]["line"]["color"] = "#636EFA"
+
+        global data_json
+        data_json = json.dumps(data)
+
+        stop_time = time.process_time()
+        print("Processed {:d} datapoints in {:.3f} seconds".format(len(raw_data[0]), stop_time - start_time))
+
+        time.sleep(1)
 
 
 if __name__ == "__main__":
@@ -167,8 +170,8 @@ if __name__ == "__main__":
     # start periodic sampling
     sample_periodic()
 
-    # send_thread = threading.Thread(target=send_data, args=[], daemon=True)
-    # send_thread.start()
+    processing_thread = threading.Thread(target=process_data, args=[], daemon=True)
+    processing_thread.start()
     
     # start web app
-    app.run(host="0.0.0.0", port=5000)
+    socketio.run(app, host="0.0.0.0", port=5000)
