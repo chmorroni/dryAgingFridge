@@ -1,8 +1,8 @@
 
 import csv
 from datetime import datetime
-from flask import Flask, render_template
-from flask_socketio import SocketIO, emit
+from flask import Flask, Response, render_template
+# from flask_socketio import SocketIO, emit, send
 import json
 import numpy
 import os
@@ -98,65 +98,62 @@ def sample_periodic():
 
 ## initialize webapp
 app = Flask(__name__)
-app.config["SECRET_KEY"] = Accounts.WEB_KEY
-socketio = SocketIO(app)
+# app.config["SECRET_KEY"] = Accounts.WEB_KEY
+# socketio = SocketIO(app)
 
 @app.route("/", methods = ["POST", "GET"])
-def line():
+def index():
     return render_template("index.html")
 
 
 ## event handlers
-@socketio.on("data-request")
-def send_data():
-    raw_data = buffer.get_data()
-    
-    data = [{}, {}, {}, {}, {}, {}, {}, {}]
+@app.route("/data")
+def chart_data():
+    def update_data():
+        while True:
+            start_time = time.process_time()
 
-    for line in data:
-        line["x"] = [date.strftime("%Y-%m-%d %X") for date in raw_data[0]]
+            raw_data = buffer.get_data()
+            data = [{}, {}, {}]
 
-    data[0]["y"] = raw_data[1]
-    data[1]["y"] = raw_data[2]
-    data[2]["y"] = raw_data[3]
-    data[3]["y"] = raw_data[4]
-    data[4]["y"] = raw_data[5]
-    data[5]["y"] = raw_data[6]
-    data[6]["y"] = list(numpy.average(raw_data[1:4], axis=0))
+            for line in data:
+                line["x"] = [date.strftime("%Y-%m-%d %X") for date in raw_data[0]]
 
-    # LPF humidity
-    humidity = numpy.average(raw_data[4:7], axis=0)
-    b, a = butter(4, 1/512, btype='low', analog=False)
-    data[7]["y"] = list(filtfilt(b, a, humidity))
+            data[1]["y"] = list(numpy.average(raw_data[1:4], axis=0))
 
-    data[0]["name"] = "Middle Sensor Temperature (F)"
-    data[1]["name"] = "Upper Sensor Temperature (F)"
-    data[2]["name"] = "Lower Sensor Temperature (F)"
-    data[3]["name"] = "Middle Sensor Humidity (%)"
-    data[4]["name"] = "Upper Sensor Humidity (%)"
-    data[5]["name"] = "Lower Sensor Humidity (%)"
-    data[6]["name"] = "Average Temperature (F)"
-    data[7]["name"] = "Filtered Average Humidity (%)"
+            # LPF humidity
+            humidity = numpy.average(raw_data[4:7], axis=0)
+            data[0]["y"] = list(humidity)
 
-    # styling
-    for line in data:
-        line["mode"] = "lines"
-        line["line"] = {}
+            if len(humidity) > 15:
+                b, a = butter(4, 1/512, btype='low', analog=False)
+                data[2]["y"] = list(filtfilt(b, a, humidity))
+            else:
+                data[2]["y"] = list(humidity)
 
-    for line in data[0:6]:
-        line["showlegend"] = False
+            data[0]["name"] = "Average Humidity (%)"
+            data[1]["name"] = "Average Temperature (F)"
+            data[2]["name"] = "Filtered Average Humidity (%)"
 
-    data[0]["line"]["color"] = "#FBD6D0"
-    data[1]["line"]["color"] = "#FBD6D0"
-    data[2]["line"]["color"] = "#FBD6D0"
-    data[3]["line"]["color"] = "#CED1FD"
-    data[4]["line"]["color"] = "#CED1FD"
-    data[5]["line"]["color"] = "#CED1FD"
-    data[6]["line"]["color"] = "#EF553B"
-    data[7]["line"]["color"] = "#636EFA"
+            # styling
+            for line in data:
+                line["mode"] = "lines"
+                line["line"] = {}
 
-    data_json = json.dumps(data)
-    emit("data-response", data_json)
+            data[0]["showlegend"] = False
+
+            data[0]["line"]["color"] = "#CED1FD"
+            data[1]["line"]["color"] = "#EF553B"
+            data[2]["line"]["color"] = "#636EFA"
+
+            data_json = json.dumps(data)
+            yield f"data:{data_json}\n\n"
+
+            stop_time = time.process_time()
+            print("Processed and sent {:d} datapoints in {:.3f} seconds".format(len(raw_data[0]), stop_time - start_time))
+            time.sleep(1)
+
+    return Response(update_data(), mimetype="text/event-stream")
 
 
 if __name__ == "__main__":
@@ -169,5 +166,9 @@ if __name__ == "__main__":
 
     # start periodic sampling
     sample_periodic()
+
+    # send_thread = threading.Thread(target=send_data, args=[], daemon=True)
+    # send_thread.start()
     
-    socketio.run(app, host="0.0.0.0", port=5000)
+    # start web app
+    app.run(host="0.0.0.0", port=5000)
