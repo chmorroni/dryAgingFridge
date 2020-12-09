@@ -49,7 +49,7 @@ compressor_pins = [2, 3, 4]
 compressor = Compressor(compressor_pins)
 door = DoorSwitch(1)
 # atomizer = WaterAtomizer(3) # TODO actual pin
-email = Email(MIN_EMAIL_PERIOD_S)
+# email = Email(MIN_EMAIL_PERIOD_S)
 data_json = ""
 
 
@@ -82,10 +82,10 @@ def sample_periodic():
         )
 
     # check warning bounds
-    if (temp > TEMPERATURE_WARNING_UPPER_F) or (temp < TEMPERATURE_WARNING_LOWER_F):
-        email.send_mail(Accounts.TO_EMAIL, "Refrigerator Temperature Out of Bounds", "Current temperature {:.3f} F".format(temp))
-    if door.isOpen() == True:
-        email.send_mail(Accounts.TO_EMAIL, "Refrigerator Door Open", "Refrigerator door is currently open")
+    # if (temp > TEMPERATURE_WARNING_UPPER_F) or (temp < TEMPERATURE_WARNING_LOWER_F):
+        # email.send_mail(Accounts.TO_EMAIL, "Refrigerator Temperature Out of Bounds", "Current temperature {:.3f} F".format(temp))
+    # if door.isOpen() == True:
+        # email.send_mail(Accounts.TO_EMAIL, "Refrigerator Door Open", "Refrigerator door is currently open")
 
 
 ## initialize webapp
